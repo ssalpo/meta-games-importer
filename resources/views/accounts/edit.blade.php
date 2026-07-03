@@ -1,11 +1,11 @@
-<x-layouts.app title="Edit account">
+<x-layouts.app title="Редактировать аккаунт">
     <div class="mb-8 flex items-start justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-semibold text-zinc-950">Edit account</h1>
+            <h1 class="text-2xl font-semibold text-zinc-950">Редактировать аккаунт</h1>
             <p class="mt-2 text-sm text-zinc-600">{{ $account->name }}</p>
         </div>
         <a href="{{ route('accounts.index') }}" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-white">
-            Back
+            Назад
         </a>
     </div>
 
@@ -15,10 +15,10 @@
 
         <div class="mt-8 flex items-center justify-end gap-3">
             <a href="{{ route('accounts.index') }}" class="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100">
-                Cancel
+                Отмена
             </a>
             <button type="submit" class="rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800">
-                Update account
+                Обновить аккаунт
             </button>
         </div>
     </form>

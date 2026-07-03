@@ -14,22 +14,28 @@
         <div class="min-h-screen">
             <header class="border-b border-zinc-200 bg-white">
                 <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-                    <a href="{{ route('accounts.index') }}" class="text-base font-semibold text-zinc-950">
+                    <a href="{{ route('products.index') }}" class="text-base font-semibold text-zinc-950">
                         Metea Games Importer
                     </a>
 
-                    <nav class="flex items-center gap-2">
+                    <nav class="flex items-center gap-1 sm:gap-2">
+                        <a
+                            href="{{ route('products.index') }}"
+                            class="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950"
+                        >
+                            Продукты
+                        </a>
                         <a
                             href="{{ route('accounts.index') }}"
                             class="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950"
                         >
-                            Accounts
+                            Аккаунты
                         </a>
                         <a
-                            href="{{ route('accounts.create') }}"
+                            href="{{ route('products.create') }}"
                             class="rounded-md bg-zinc-950 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
                         >
-                            Add account
+                            Добавить продукт
                         </a>
                     </nav>
                 </div>

@@ -2,7 +2,7 @@
 
 <div class="space-y-6">
     <div>
-        <label for="name" class="block text-sm font-medium text-zinc-800">Name</label>
+        <label for="name" class="block text-sm font-medium text-zinc-800">Название</label>
         <input
             id="name"
             name="name"
@@ -18,7 +18,7 @@
     </div>
 
     <div>
-        <label for="access_token" class="block text-sm font-medium text-zinc-800">Access token</label>
+        <label for="access_token" class="block text-sm font-medium text-zinc-800">Токен доступа</label>
         <textarea
             id="access_token"
             name="access_token"
@@ -28,9 +28,9 @@
         >{{ old('access_token') }}</textarea>
         <p class="mt-2 text-xs text-zinc-500">
             @if ($account->exists)
-                Leave empty to keep the current token.
+                Оставьте поле пустым, чтобы сохранить текущий токен.
             @else
-                The token will be encrypted before it is saved.
+                Токен будет зашифрован перед сохранением.
             @endif
         </p>
         @error('access_token')

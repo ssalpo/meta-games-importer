@@ -36,7 +36,7 @@ class AccountController extends Controller
 
         return redirect()
             ->route('accounts.index')
-            ->with('status', 'Account created.');
+            ->with('status', 'Аккаунт создан.');
     }
 
     public function show(Account $account): View
@@ -65,7 +65,7 @@ class AccountController extends Controller
 
         return redirect()
             ->route('accounts.index')
-            ->with('status', 'Account updated.');
+            ->with('status', 'Аккаунт обновлен.');
     }
 
     public function destroy(Account $account): RedirectResponse
@@ -74,7 +74,7 @@ class AccountController extends Controller
 
         return redirect()
             ->route('accounts.index')
-            ->with('status', 'Account deleted.');
+            ->with('status', 'Аккаунт удален.');
     }
 
     private function validatedData(Request $request, ?Account $account = null): array
