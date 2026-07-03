@@ -57,7 +57,7 @@
                                         @if ($metaGame->image_square)
                                             <img
                                                 src="{{ $metaGame->imageSquareUrl() }}"
-                                                alt="{{ $metaGame->full_title }}"
+                                                alt="{{ $metaGame->productTitle() }}"
                                                 class="h-12 w-12 rounded-md object-cover"
                                                 loading="lazy"
                                             >
@@ -65,7 +65,7 @@
                                             <div class="h-12 w-12 rounded-md bg-zinc-100"></div>
                                         @endif
                                         <div class="min-w-0">
-                                            <p class="font-medium text-zinc-950">{{ $metaGame->full_title }}</p>
+                                            <p class="font-medium text-zinc-950">{{ $metaGame->productTitle() }}</p>
                                             @if ($metaGame->parent_title)
                                                 <p class="mt-1 text-xs text-zinc-500">Parent: {{ $metaGame->parent_title }}</p>
                                             @endif
@@ -103,7 +103,7 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center justify-end gap-2">
-                                        <form method="POST" action="{{ route('meta-games.create-product', $metaGame) }}">
+                                        <form method="POST" action="{{ route('meta-games.create-product', $metaGame) }}" target="_blank">
                                             @csrf
                                             <button type="submit" class="rounded-md bg-zinc-950 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800">
                                                 Создать продукт

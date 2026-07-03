@@ -79,14 +79,15 @@ final class MetaGamesImportService
         $parentTitle = filled($item['parent_title'] ?? null)
             ? trim((string) $item['parent_title'])
             : null;
+        $isAddon = (bool) ($item['is_addon'] ?? false);
 
         return [
             'external_id' => (string) $item['external_id'],
             'source_id' => $item['id'] ?? null,
             'title' => $title,
             'parent_title' => $parentTitle,
-            'full_title' => $this->fullTitle($parentTitle, $title),
-            'is_addon' => (bool) ($item['is_addon'] ?? false),
+            'full_title' => $this->fullTitle($parentTitle, $title, $isAddon),
+            'is_addon' => $isAddon,
             'price' => $item['price'] ?? null,
             'price_discount' => $item['price_discount'] ?? null,
             'discount_ended' => (bool) ($item['discount_ended'] ?? false),
@@ -103,8 +104,12 @@ final class MetaGamesImportService
         ];
     }
 
-    private function fullTitle(?string $parentTitle, string $title): string
+    private function fullTitle(?string $parentTitle, string $title, bool $isAddon): string
     {
+        if ($isAddon && filled($parentTitle)) {
+            return trim($parentTitle.' DLC '.$title);
+        }
+
         return trim(implode(' ', array_filter(
             [$parentTitle, $title],
             static fn (?string $value): bool => filled($value),

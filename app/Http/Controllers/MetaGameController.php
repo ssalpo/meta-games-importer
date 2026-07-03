@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MetaGame;
 use App\Models\Product;
+use App\Services\CentralBankExchangeRateService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,10 @@ use Throwable;
 
 final class MetaGameController extends Controller
 {
+    public function __construct(
+        private readonly CentralBankExchangeRateService $exchangeRateService,
+    ) {}
+
     public function index(Request $request): View
     {
         $query = MetaGame::query()
@@ -53,15 +58,27 @@ final class MetaGameController extends Controller
     {
         $imageWarning = false;
 
-        $product = DB::transaction(function () use ($metaGame, &$imageWarning): Product {
+        try {
+            $priceRub = $this->rublePrice($metaGame->effectivePrice());
+        } catch (Throwable $exception) {
+            Log::warning('Не удалось получить официальный курс USD для создания продукта.', [
+                'meta_game_id' => $metaGame->id,
+                'external_id' => $metaGame->external_id,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return back()->with('status', 'Продукт не создан: не удалось получить официальный курс доллара.');
+        }
+
+        $product = DB::transaction(function () use ($metaGame, $priceRub, &$imageWarning): Product {
             $product = Product::create([
                 'account_id' => session('selected_account_id'),
                 'meta_game_id' => $metaGame->id,
                 'placement_category' => $metaGame->is_addon ? 'Дополнение' : 'Игра',
                 'external_reference' => $metaGame->external_id,
-                'price' => $metaGame->effectivePrice() ?? 0,
-                'title_ru' => $metaGame->full_title,
-                'title_en' => $metaGame->full_title,
+                'price' => $priceRub,
+                'title_ru' => $metaGame->productTitle(),
+                'title_en' => $metaGame->productTitle(),
                 'description_ru' => null,
                 'description_en' => null,
                 'instruction_ru' => null,
@@ -84,6 +101,20 @@ final class MetaGameController extends Controller
             ->with('status', $imageWarning
                 ? 'Продукт создан, но изображение не удалось скачать.'
                 : 'Продукт создан из импортированной игры.');
+    }
+
+    private function rublePrice(?string $usdPrice): string
+    {
+        if ($usdPrice === null || (float) $usdPrice <= 0) {
+            return '0.00';
+        }
+
+        return number_format(
+            $this->exchangeRateService->usdToRub((float) $usdPrice),
+            2,
+            '.',
+            '',
+        );
     }
 
     private function attachSquareImage(Product $product, MetaGame $metaGame): bool

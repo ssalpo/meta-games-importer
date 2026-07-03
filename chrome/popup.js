@@ -204,6 +204,7 @@ async function publishProduct(productId, button) {
     await updateOfferQuantity(sellerBaseUrl, offerId);
     await updateOfferPrice(sellerBaseUrl, offerId, product.price);
     await updateOfferInstructions(sellerBaseUrl, offerId, product);
+    await activateOffer(sellerBaseUrl, offerId);
 
     setStatus(`Продукт опубликован, ID: ${offerId}`);
     await loadProducts();
@@ -393,6 +394,20 @@ async function updateOfferInstructions(sellerBaseUrl, offerId, product) {
 
   if (!response.ok) {
     throw new Error(`Не удалось обновить инструкции: HTTP ${response.status}`);
+  }
+}
+
+async function activateOffer(sellerBaseUrl, offerId) {
+  const response = await fetch(`${sellerBaseUrl}/api/v1/offers/${offerId}/activate`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Не удалось опубликовать объявление: HTTP ${response.status}`);
   }
 }
 

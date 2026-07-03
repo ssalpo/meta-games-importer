@@ -41,6 +41,10 @@ return [
         'import_cron' => env('META_GAMES_IMPORT_CRON', '0 * * * *'),
     ],
 
+    'cbr' => [
+        'daily_xml_url' => env('CBR_DAILY_XML_URL', 'https://www.cbr.ru/scripts/XML_daily.asp'),
+    ],
+
     'deepseek' => [
         'api_key' => env('DEEPSEEK_API_KEY'),
         'base_url' => env('DEEPSEEK_BASE_URL', 'https://api.deepseek.com'),

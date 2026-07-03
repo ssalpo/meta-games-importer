@@ -66,6 +66,15 @@ final class MetaGame extends Model
         return $this->price;
     }
 
+    public function productTitle(): string
+    {
+        if ($this->is_addon && filled($this->parent_title)) {
+            return trim($this->parent_title.' DLC '.$this->title);
+        }
+
+        return $this->full_title;
+    }
+
     public function imageSquareUrl(): ?string
     {
         if (! $this->image_square) {

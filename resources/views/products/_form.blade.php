@@ -96,8 +96,8 @@
             $image = $locale === 'ru' ? $product->imageRu() : $product->imageEn();
             $instructionField = 'instruction_'.$locale;
             $additionalInfoField = 'additional_info_'.$locale;
-            $instructionValue = old($instructionField, $product->{$instructionField} ?: ($product->exists ? null : ($lastReusableProductTexts[$instructionField] ?? null)));
-            $additionalInfoValue = old($additionalInfoField, $product->{$additionalInfoField} ?: ($product->exists ? null : ($lastReusableProductTexts[$additionalInfoField] ?? null)));
+            $instructionValue = old($instructionField, $product->{$instructionField} ?: ($lastReusableProductTexts[$instructionField] ?? null));
+            $additionalInfoValue = old($additionalInfoField, $product->{$additionalInfoField} ?: ($lastReusableProductTexts[$additionalInfoField] ?? null));
         @endphp
 
         <section class="rounded-md border border-zinc-200 bg-white p-6 shadow-sm">
