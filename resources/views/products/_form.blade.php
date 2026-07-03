@@ -57,6 +57,21 @@
             </div>
 
             <div>
+                <label for="ggsel_offer_id" class="block text-sm font-medium text-zinc-800">GGSEL offer ID</label>
+                <input
+                    id="ggsel_offer_id"
+                    name="ggsel_offer_id"
+                    type="number"
+                    min="1"
+                    value="{{ old('ggsel_offer_id', $product->ggsel_offer_id) }}"
+                    class="mt-2 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                >
+                @error('ggsel_offer_id')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
                 <label for="price" class="block text-sm font-medium text-zinc-800">Цена</label>
                 <input
                     id="price"
@@ -79,6 +94,10 @@
         @php
             $collection = 'image_'.$locale;
             $image = $locale === 'ru' ? $product->imageRu() : $product->imageEn();
+            $instructionField = 'instruction_'.$locale;
+            $additionalInfoField = 'additional_info_'.$locale;
+            $instructionValue = old($instructionField, $product->{$instructionField} ?: ($product->exists ? null : ($lastReusableProductTexts[$instructionField] ?? null)));
+            $additionalInfoValue = old($additionalInfoField, $product->{$additionalInfoField} ?: ($product->exists ? null : ($lastReusableProductTexts[$additionalInfoField] ?? null)));
         @endphp
 
         <section class="rounded-md border border-zinc-200 bg-white p-6 shadow-sm">
@@ -199,7 +218,7 @@
                         name="instruction_{{ $locale }}"
                         rows="5"
                         class="mt-2 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
-                    >{{ old('instruction_'.$locale, $product->{'instruction_'.$locale}) }}</textarea>
+                    >{{ $instructionValue }}</textarea>
                     @error('instruction_'.$locale)
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -212,7 +231,7 @@
                         name="additional_info_{{ $locale }}"
                         rows="4"
                         class="mt-2 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
-                    >{{ old('additional_info_'.$locale, $product->{'additional_info_'.$locale}) }}</textarea>
+                    >{{ $additionalInfoValue }}</textarea>
                     @error('additional_info_'.$locale)
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror

@@ -22,6 +22,7 @@ final class Product extends Model implements HasMedia
         'account_id',
         'placement_category',
         'external_reference',
+        'ggsel_offer_id',
         'price',
         'title_ru',
         'title_en',
@@ -37,6 +38,7 @@ final class Product extends Model implements HasMedia
     {
         return [
             'price' => 'decimal:2',
+            'ggsel_offer_id' => 'integer',
         ];
     }
 

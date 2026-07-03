@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Metea Games Importer",
+  "description": "Публикация продуктов из Metea Games Importer.",
+  "version": "0.1.0",
+  "action": {
+    "default_title": "Metea Games Importer",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "host_permissions": [
+    "http://localhost:8088/*",
+    "http://127.0.0.1:8088/*",
+    "https://*/*",
+    "http://*/*"
+  ],
+  "permissions": [
+    "activeTab",
+    "storage"
+  ]
+}

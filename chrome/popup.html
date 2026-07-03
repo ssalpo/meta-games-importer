@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Metea Games Importer</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="popup">
+      <header class="header">
+        <div>
+          <h1>Продукты</h1>
+          <p>Список товаров для публикации</p>
+        </div>
+        <button id="refreshButton" class="icon-button" type="button" title="Обновить">↻</button>
+      </header>
+
+      <section id="status" class="status">Загрузка...</section>
+      <section id="productList" class="product-list" aria-live="polite"></section>
+    </main>
+
+    <template id="productTemplate">
+      <article class="product">
+        <div class="product-main">
+          <div class="product-title"></div>
+          <div class="product-meta"></div>
+        </div>
+        <button class="publish-button" type="button">Опубликовать</button>
+      </article>
+    </template>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

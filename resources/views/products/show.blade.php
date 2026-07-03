@@ -32,6 +32,10 @@
                         <dd class="text-sm text-zinc-950 sm:col-span-2">{{ $product->external_reference ?: '-' }}</dd>
                     </div>
                     <div class="grid gap-1 py-3 sm:grid-cols-3">
+                        <dt class="text-sm font-medium text-zinc-600">GGSEL offer ID</dt>
+                        <dd class="text-sm text-zinc-950 sm:col-span-2">{{ $product->ggsel_offer_id ?: '-' }}</dd>
+                    </div>
+                    <div class="grid gap-1 py-3 sm:grid-cols-3">
                         <dt class="text-sm font-medium text-zinc-600">Цена</dt>
                         <dd class="text-sm font-semibold text-zinc-950 sm:col-span-2">{{ number_format((float) $product->price, 2, '.', ' ') }}</dd>
                     </div>

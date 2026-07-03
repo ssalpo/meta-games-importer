@@ -27,6 +27,7 @@
                             <th scope="col" class="px-6 py-3">Аккаунт</th>
                             <th scope="col" class="px-6 py-3">Категория</th>
                             <th scope="col" class="px-6 py-3">Внешняя система</th>
+                            <th scope="col" class="px-6 py-3">GGSEL</th>
                             <th scope="col" class="px-6 py-3">Цена</th>
                             <th scope="col" class="px-6 py-3">Изображения</th>
                             <th scope="col" class="px-6 py-3 text-right">Действия</th>
@@ -42,6 +43,7 @@
                                 <td class="px-6 py-4 text-zinc-700">{{ $product->account?->name ?: '-' }}</td>
                                 <td class="px-6 py-4 text-zinc-700">{{ $product->placement_category }}</td>
                                 <td class="px-6 py-4 text-zinc-700">{{ $product->external_reference ?: '-' }}</td>
+                                <td class="px-6 py-4 text-zinc-700">{{ $product->ggsel_offer_id ?: '-' }}</td>
                                 <td class="px-6 py-4 font-medium text-zinc-950">{{ number_format((float) $product->price, 2, '.', ' ') }}</td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-2 text-xs">

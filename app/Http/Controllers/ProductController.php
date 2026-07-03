@@ -31,6 +31,7 @@ class ProductController extends Controller
             'product' => new Product,
             ...$this->accountViewData(),
             ...$this->generationPromptViewData(),
+            ...$this->lastReusableTextViewData(),
         ]);
     }
 
@@ -40,6 +41,7 @@ class ProductController extends Controller
 
         $product = Product::create($this->productData($request));
         $request->session()->put('selected_account_id', $product->account_id);
+        $this->rememberReusableTexts($request);
 
         $this->syncMedia($request, $product);
 
@@ -65,6 +67,7 @@ class ProductController extends Controller
             'product' => $product,
             ...$this->accountViewData($product),
             ...$this->generationPromptViewData(),
+            ...$this->lastReusableTextViewData(),
         ]);
     }
 
@@ -74,6 +77,7 @@ class ProductController extends Controller
 
         $product->update($this->productData($request));
         $request->session()->put('selected_account_id', $product->account_id);
+        $this->rememberReusableTexts($request);
         $this->syncMedia($request, $product);
 
         return redirect()
@@ -96,6 +100,7 @@ class ProductController extends Controller
             'placement_category' => ['required', 'string', 'max:255'],
             'account_id' => ['nullable', 'integer', 'exists:accounts,id'],
             'external_reference' => ['nullable', 'string', 'max:255'],
+            'ggsel_offer_id' => ['nullable', 'integer'],
             'price' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
             'title_ru' => ['required', 'string', 'max:255'],
             'title_en' => ['required', 'string', 'max:255'],
@@ -135,6 +140,7 @@ class ProductController extends Controller
             'placement_category',
             'account_id',
             'external_reference',
+            'ggsel_offer_id',
             'price',
             'title_ru',
             'title_en',
@@ -183,5 +189,32 @@ class ProductController extends Controller
             'generationPrompts' => $prompts,
             'selectedGenerationPromptId' => $selectedPromptId,
         ];
+    }
+
+    private function lastReusableTextViewData(): array
+    {
+        return [
+            'lastReusableProductTexts' => session('last_reusable_product_texts', []),
+        ];
+    }
+
+    private function rememberReusableTexts(Request $request): void
+    {
+        $texts = session('last_reusable_product_texts', []);
+
+        foreach ([
+            'instruction_ru',
+            'instruction_en',
+            'additional_info_ru',
+            'additional_info_en',
+        ] as $field) {
+            $value = trim((string) $request->input($field, ''));
+
+            if ($value !== '') {
+                $texts[$field] = $value;
+            }
+        }
+
+        $request->session()->put('last_reusable_product_texts', $texts);
     }
 }
