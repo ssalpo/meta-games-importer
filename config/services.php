@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'meta_games' => [
+        'api_url' => env('META_GAMES_API_URL', 'http://meta-games.com/api'),
+        'image_base_url' => env('META_GAMES_IMAGE_BASE_URL', 'https://queststoredb.com'),
+        'import_cron' => env('META_GAMES_IMPORT_CRON', '0 * * * *'),
+    ],
+
 ];
