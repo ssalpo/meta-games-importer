@@ -9,7 +9,7 @@
         </a>
     </div>
 
-    <form method="POST" action="{{ route('products.store') }}" enctype="multipart/form-data" class="space-y-6">
+    <form method="POST" action="{{ route('products.store') }}" enctype="multipart/form-data" class="space-y-6" x-data="productForm">
         @include('products._form')
 
         <div class="flex items-center justify-end gap-3">

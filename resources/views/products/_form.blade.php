@@ -60,7 +60,59 @@
         @endphp
 
         <section class="rounded-md border border-zinc-200 bg-white p-6 shadow-sm">
-            <h2 class="text-base font-semibold text-zinc-950">{{ $label }}</h2>
+            <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <h2 class="text-base font-semibold text-zinc-950">{{ $label }}</h2>
+
+                @if ($locale === 'ru')
+                    <div class="w-full md:max-w-xl">
+                        <label for="generation_prompt_id" class="block text-sm font-medium text-zinc-800">Промпт генерации</label>
+                        <select
+                            id="generation_prompt_id"
+                            class="mt-2 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                        >
+                            @foreach ($generationPrompts as $prompt)
+                                <option value="{{ $prompt->id }}" @selected((int) $selectedGenerationPromptId === $prompt->id)>
+                                    {{ $prompt->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @if ($generationPrompts->isEmpty())
+                            <p class="mt-2 text-sm text-red-600">
+                                Нет активных промптов. Создайте промпт в разделе “Промпты”.
+                            </p>
+                        @endif
+
+                        <label for="deepseek_game_title" class="mt-4 block text-sm font-medium text-zinc-800">Название игры для генерации</label>
+                        <input
+                            id="deepseek_game_title"
+                            type="text"
+                            value="{{ old('title_ru', $product->title_ru ? str_replace(' для Meta / Oculus Quest', '', $product->title_ru) : '') }}"
+                            class="mt-2 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                            placeholder="Например: Pavlov Shack"
+                        >
+
+                        <label for="deepseek_instructions" class="mt-4 block text-sm font-medium text-zinc-800">Дополнительные инструкции</label>
+                        <textarea
+                            id="deepseek_instructions"
+                            rows="3"
+                            class="mt-2 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                            placeholder="Например: жанры Shooter, Action, Tactical; режимы Multiplayer, Online PvP; акцент на командной игре."
+                        ></textarea>
+                        <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <button
+                                type="button"
+                                x-on:click="generateEnglishCopy"
+                                x-bind:disabled="isGeneratingEnglish"
+                                class="inline-flex w-fit items-center justify-center rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400"
+                            >
+                                <span x-show="!isGeneratingEnglish">Сгенерировать RU/EN название и описание</span>
+                                <span x-cloak x-show="isGeneratingEnglish">Генерация...</span>
+                            </button>
+                            <p x-cloak x-show="generationError" x-text="generationError" class="text-sm text-red-600"></p>
+                        </div>
+                    </div>
+                @endif
+            </div>
 
             <div class="mt-6 space-y-6">
                 <div>

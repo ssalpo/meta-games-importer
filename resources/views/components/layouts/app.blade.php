@@ -32,6 +32,12 @@
                             Импорт игр
                         </a>
                         <a
+                            href="{{ route('generation-prompts.index') }}"
+                            class="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950"
+                        >
+                            Промпты
+                        </a>
+                        <a
                             href="{{ route('accounts.index') }}"
                             class="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950"
                         >

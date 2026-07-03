@@ -9,7 +9,7 @@
         </a>
     </div>
 
-    <form method="POST" action="{{ route('products.update', $product) }}" enctype="multipart/form-data" class="space-y-6">
+    <form method="POST" action="{{ route('products.update', $product) }}" enctype="multipart/form-data" class="space-y-6" x-data="productForm">
         @method('PUT')
         @include('products._form')
 

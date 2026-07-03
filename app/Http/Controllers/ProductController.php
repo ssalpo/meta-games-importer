@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\GenerationPrompt;
 use App\Models\Product;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -27,6 +28,7 @@ class ProductController extends Controller
     {
         return view('products.create', [
             'product' => new Product,
+            ...$this->generationPromptViewData(),
         ]);
     }
 
@@ -58,6 +60,7 @@ class ProductController extends Controller
 
         return view('products.edit', [
             'product' => $product,
+            ...$this->generationPromptViewData(),
         ]);
     }
 
@@ -135,5 +138,25 @@ class ProductController extends Controller
             'additional_info_ru',
             'additional_info_en',
         ]);
+    }
+
+    private function generationPromptViewData(): array
+    {
+        $prompts = GenerationPrompt::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        $selectedPromptId = session('selected_generation_prompt_id');
+
+        if (! $prompts->contains('id', $selectedPromptId)) {
+            $selectedPromptId = $prompts->first()?->id;
+        }
+
+        return [
+            'generationPrompts' => $prompts,
+            'selectedGenerationPromptId' => $selectedPromptId,
+        ];
     }
 }
