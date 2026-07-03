@@ -20,6 +20,7 @@ final class Product extends Model implements HasMedia
 
     protected $fillable = [
         'account_id',
+        'meta_game_id',
         'placement_category',
         'external_reference',
         'ggsel_offer_id',
@@ -51,6 +52,11 @@ final class Product extends Model implements HasMedia
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function metaGame(): BelongsTo
+    {
+        return $this->belongsTo(MetaGame::class);
     }
 
     public function imageRu(): ?Media

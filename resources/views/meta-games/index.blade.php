@@ -44,6 +44,7 @@
                             <th scope="col" class="px-6 py-3">External ID</th>
                             <th scope="col" class="px-6 py-3">Тип</th>
                             <th scope="col" class="px-6 py-3">Цена</th>
+                            <th scope="col" class="px-6 py-3">Продукты</th>
                             <th scope="col" class="px-6 py-3">Обновлено в источнике</th>
                             <th scope="col" class="px-6 py-3 text-right">Действия</th>
                         </tr>
@@ -81,22 +82,33 @@
                                     {{ $metaGame->effectivePrice() !== null ? number_format((float) $metaGame->effectivePrice(), 2, '.', ' ') : '-' }}
                                 </td>
                                 <td class="px-6 py-4 text-zinc-600">
+                                    @if ($metaGame->products->isNotEmpty())
+                                        <div class="space-y-1">
+                                            <p class="text-xs font-semibold text-zinc-950">Создано: {{ $metaGame->products_count }}</p>
+                                            @foreach ($metaGame->products->take(3) as $product)
+                                                <a href="{{ route('products.edit', $product) }}" class="block text-xs text-zinc-600 hover:text-zinc-950">
+                                                    #{{ $product->id }}{{ $product->account ? ' · '.$product->account->name : ' · без аккаунта' }}
+                                                </a>
+                                            @endforeach
+                                            @if ($metaGame->products_count > 3)
+                                                <p class="text-xs text-zinc-400">и еще {{ $metaGame->products_count - 3 }}</p>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-zinc-400">Нет</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-zinc-600">
                                     {{ $metaGame->source_updated_at?->format('Y-m-d H:i') ?: '-' }}
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center justify-end gap-2">
-                                        @if ($metaGame->product)
-                                            <a href="{{ route('products.edit', $metaGame->product) }}" class="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100">
-                                                Открыть продукт
-                                            </a>
-                                        @else
-                                            <form method="POST" action="{{ route('meta-games.create-product', $metaGame) }}">
-                                                @csrf
-                                                <button type="submit" class="rounded-md bg-zinc-950 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800">
-                                                    Создать продукт
-                                                </button>
-                                            </form>
-                                        @endif
+                                        <form method="POST" action="{{ route('meta-games.create-product', $metaGame) }}">
+                                            @csrf
+                                            <button type="submit" class="rounded-md bg-zinc-950 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800">
+                                                Создать продукт
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>

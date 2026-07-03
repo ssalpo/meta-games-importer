@@ -1,22 +1,120 @@
 const API_BASE_URL = 'http://localhost:8088';
+const STORAGE_SELECTED_ACCOUNT_ID = 'selected_account_id';
 
 const statusElement = document.getElementById('status');
 const productListElement = document.getElementById('productList');
 const productTemplate = document.getElementById('productTemplate');
 const refreshButton = document.getElementById('refreshButton');
+const accountSelect = document.getElementById('accountSelect');
+
+let selectedAccountId = null;
 
 refreshButton.addEventListener('click', () => {
-  loadProducts();
+  initializePopup();
 });
 
-loadProducts();
+accountSelect.addEventListener('change', async () => {
+  selectedAccountId = accountSelect.value ? Number(accountSelect.value) : null;
+  productListElement.replaceChildren();
+
+  if (!selectedAccountId) {
+    await chrome.storage.local.remove(STORAGE_SELECTED_ACCOUNT_ID);
+    setStatus('Выберите аккаунт.');
+    return;
+  }
+
+  await chrome.storage.local.set({
+    [STORAGE_SELECTED_ACCOUNT_ID]: selectedAccountId,
+  });
+
+  await loadProducts();
+});
+
+initializePopup();
+
+async function initializePopup() {
+  setStatus('Загрузка аккаунтов...');
+  productListElement.replaceChildren();
+
+  try {
+    const accounts = await loadAccounts();
+
+    if (accounts.length === 0) {
+      accountSelect.disabled = true;
+      selectedAccountId = null;
+      await chrome.storage.local.remove(STORAGE_SELECTED_ACCOUNT_ID);
+      setStatus('Аккаунтов пока нет. Создайте аккаунт в панели.');
+      return;
+    }
+
+    accountSelect.disabled = false;
+    renderAccounts(accounts);
+
+    const savedAccountId = await getSavedAccountId();
+    const savedAccountExists = accounts.some((account) => account.id === savedAccountId);
+
+    if (!savedAccountExists) {
+      selectedAccountId = null;
+      accountSelect.value = '';
+      await chrome.storage.local.remove(STORAGE_SELECTED_ACCOUNT_ID);
+      setStatus(savedAccountId ? 'Сохраненный аккаунт не найден. Выберите аккаунт.' : 'Выберите аккаунт.');
+      return;
+    }
+
+    selectedAccountId = savedAccountId;
+    accountSelect.value = String(savedAccountId);
+    await loadProducts();
+  } catch (error) {
+    setStatus(`Не удалось загрузить аккаунты: ${error.message}`);
+  }
+}
+
+async function loadAccounts() {
+  const response = await fetch(`${API_BASE_URL}/extension/accounts`, {
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const payload = await response.json();
+
+  return payload.data ?? [];
+}
+
+function renderAccounts(accounts) {
+  accountSelect.replaceChildren(new Option('Выберите аккаунт', ''));
+
+  for (const account of accounts) {
+    accountSelect.append(new Option(account.name, String(account.id)));
+  }
+}
+
+async function getSavedAccountId() {
+  const stored = await chrome.storage.local.get(STORAGE_SELECTED_ACCOUNT_ID);
+  const accountId = Number(stored[STORAGE_SELECTED_ACCOUNT_ID]);
+
+  return Number.isInteger(accountId) && accountId > 0 ? accountId : null;
+}
 
 async function loadProducts() {
+  if (!selectedAccountId) {
+    setStatus('Выберите аккаунт.');
+    productListElement.replaceChildren();
+    return;
+  }
+
   setStatus('Загрузка...');
   productListElement.replaceChildren();
 
   try {
-    const response = await fetch(`${API_BASE_URL}/extension/products`, {
+    const url = new URL(`${API_BASE_URL}/extension/products`);
+    url.searchParams.set('account_id', String(selectedAccountId));
+
+    const response = await fetch(url, {
       headers: {
         Accept: 'application/json',
       },
@@ -30,7 +128,7 @@ async function loadProducts() {
     const products = payload.data ?? [];
 
     if (products.length === 0) {
-      setStatus('Продуктов пока нет.');
+      setStatus('Для выбранного аккаунта продуктов пока нет.');
       return;
     }
 

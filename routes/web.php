@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/products');
 Route::resource('accounts', AccountController::class);
+Route::get('extension/accounts', [ExtensionProductController::class, 'accounts'])->name('extension.accounts.index');
 Route::get('extension/products', [ExtensionProductController::class, 'index'])->name('extension.products.index');
 Route::get('extension/products/{product}', [ExtensionProductController::class, 'show'])->name('extension.products.show');
 Route::patch('extension/products/{product}/ggsel-offer-id', [ExtensionProductController::class, 'updateGgselOfferId'])->name('extension.products.ggsel-offer-id');

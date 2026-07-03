@@ -19,7 +19,8 @@ final class MetaGameController extends Controller
     public function index(Request $request): View
     {
         $query = MetaGame::query()
-            ->with('product')
+            ->with(['products.account'])
+            ->withCount('products')
             ->latest('source_updated_at')
             ->latest();
 
@@ -50,29 +51,12 @@ final class MetaGameController extends Controller
 
     public function createProduct(MetaGame $metaGame): RedirectResponse
     {
-        if ($metaGame->product) {
-            return redirect()
-                ->route('products.edit', $metaGame->product)
-                ->with('status', 'Для этой игры продукт уже создан.');
-        }
-
-        $existingProduct = Product::query()
-            ->where('external_reference', $metaGame->external_id)
-            ->first();
-
-        if ($existingProduct) {
-            $metaGame->update(['product_id' => $existingProduct->id]);
-
-            return redirect()
-                ->route('products.edit', $existingProduct)
-                ->with('status', 'Найден существующий продукт с таким external_id.');
-        }
-
         $imageWarning = false;
 
         $product = DB::transaction(function () use ($metaGame, &$imageWarning): Product {
             $product = Product::create([
                 'account_id' => session('selected_account_id'),
+                'meta_game_id' => $metaGame->id,
                 'placement_category' => $metaGame->is_addon ? 'Дополнение' : 'Игра',
                 'external_reference' => $metaGame->external_id,
                 'price' => $metaGame->effectivePrice() ?? 0,
@@ -86,7 +70,9 @@ final class MetaGameController extends Controller
                 'additional_info_en' => null,
             ]);
 
-            $metaGame->update(['product_id' => $product->id]);
+            if (! $metaGame->product_id) {
+                $metaGame->update(['product_id' => $product->id]);
+            }
 
             $imageWarning = ! $this->attachSquareImage($product, $metaGame);
 

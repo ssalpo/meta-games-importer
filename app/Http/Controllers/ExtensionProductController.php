@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,15 +12,34 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 final class ExtensionProductController extends Controller
 {
-    public function index(): JsonResponse
+    public function accounts(): JsonResponse
     {
+        $accounts = Account::query()
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn (Account $account): array => [
+                'id' => $account->id,
+                'name' => $account->name,
+            ]);
+
+        return response()->json([
+            'data' => $accounts,
+        ]);
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $accountId = $request->integer('account_id') ?: null;
+
         $products = Product::query()
             ->with('account')
+            ->when($accountId, fn ($query) => $query->where('account_id', $accountId))
             ->latest()
             ->limit(50)
             ->get()
             ->map(fn (Product $product): array => [
                 'id' => $product->id,
+                'account_id' => $product->account_id,
                 'title_ru' => $product->title_ru,
                 'title_en' => $product->title_en,
                 'price' => $product->price,
@@ -51,6 +71,7 @@ final class ExtensionProductController extends Controller
         return response()->json([
             'data' => [
                 'id' => $product->id,
+                'account_id' => $product->account_id,
                 'title_ru' => $product->title_ru,
                 'title_en' => $product->title_en,
                 'description_ru' => $product->description_ru,
