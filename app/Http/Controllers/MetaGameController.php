@@ -72,6 +72,7 @@ final class MetaGameController extends Controller
 
         $product = DB::transaction(function () use ($metaGame, &$imageWarning): Product {
             $product = Product::create([
+                'account_id' => session('selected_account_id'),
                 'placement_category' => $metaGame->is_addon ? 'Дополнение' : 'Игра',
                 'external_reference' => $metaGame->external_id,
                 'price' => $metaGame->effectivePrice() ?? 0,

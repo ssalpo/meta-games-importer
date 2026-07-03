@@ -6,6 +6,28 @@
 
         <div class="mt-6 grid gap-6 md:grid-cols-2">
             <div>
+                <label for="account_id" class="block text-sm font-medium text-zinc-800">Аккаунт</label>
+                <select
+                    id="account_id"
+                    name="account_id"
+                    class="mt-2 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                >
+                    <option value="">Без аккаунта</option>
+                    @foreach ($accounts as $account)
+                        <option value="{{ $account->id }}" @selected($selectedAccountId === $account->id)>
+                            {{ $account->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @if ($accounts->isEmpty())
+                    <p class="mt-2 text-sm text-zinc-500">Аккаунтов пока нет. Их можно добавить в разделе “Аккаунты”.</p>
+                @endif
+                @error('account_id')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
                 <label for="placement_category" class="block text-sm font-medium text-zinc-800">Категория размещения</label>
                 <input
                     id="placement_category"

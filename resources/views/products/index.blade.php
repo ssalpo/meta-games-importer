@@ -24,6 +24,7 @@
                     <thead class="bg-zinc-50 text-left text-xs font-semibold uppercase text-zinc-500">
                         <tr>
                             <th scope="col" class="px-6 py-3">Продукт</th>
+                            <th scope="col" class="px-6 py-3">Аккаунт</th>
                             <th scope="col" class="px-6 py-3">Категория</th>
                             <th scope="col" class="px-6 py-3">Внешняя система</th>
                             <th scope="col" class="px-6 py-3">Цена</th>
@@ -38,6 +39,7 @@
                                     <a href="{{ route('products.show', $product) }}" class="font-medium text-zinc-950 hover:underline">{{ $product->title_ru }}</a>
                                     <p class="mt-1 text-xs text-zinc-500">{{ $product->title_en }}</p>
                                 </td>
+                                <td class="px-6 py-4 text-zinc-700">{{ $product->account?->name ?: '-' }}</td>
                                 <td class="px-6 py-4 text-zinc-700">{{ $product->placement_category }}</td>
                                 <td class="px-6 py-4 text-zinc-700">{{ $product->external_reference ?: '-' }}</td>
                                 <td class="px-6 py-4 font-medium text-zinc-950">{{ number_format((float) $product->price, 2, '.', ' ') }}</td>

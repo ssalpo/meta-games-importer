@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\GenerationPrompt;
 use App\Models\Product;
 use Illuminate\Contracts\View\View;
@@ -15,7 +16,7 @@ class ProductController extends Controller
     public function index(): View
     {
         $products = Product::query()
-            ->with('media')
+            ->with(['account', 'media'])
             ->latest()
             ->paginate(10);
 
@@ -28,6 +29,7 @@ class ProductController extends Controller
     {
         return view('products.create', [
             'product' => new Product,
+            ...$this->accountViewData(),
             ...$this->generationPromptViewData(),
         ]);
     }
@@ -37,6 +39,7 @@ class ProductController extends Controller
         $this->validatedData($request);
 
         $product = Product::create($this->productData($request));
+        $request->session()->put('selected_account_id', $product->account_id);
 
         $this->syncMedia($request, $product);
 
@@ -47,7 +50,7 @@ class ProductController extends Controller
 
     public function show(Product $product): View
     {
-        $product->load('media');
+        $product->load(['account', 'media']);
 
         return view('products.show', [
             'product' => $product,
@@ -56,10 +59,11 @@ class ProductController extends Controller
 
     public function edit(Product $product): View
     {
-        $product->load('media');
+        $product->load(['account', 'media']);
 
         return view('products.edit', [
             'product' => $product,
+            ...$this->accountViewData($product),
             ...$this->generationPromptViewData(),
         ]);
     }
@@ -69,6 +73,7 @@ class ProductController extends Controller
         $this->validatedData($request);
 
         $product->update($this->productData($request));
+        $request->session()->put('selected_account_id', $product->account_id);
         $this->syncMedia($request, $product);
 
         return redirect()
@@ -89,6 +94,7 @@ class ProductController extends Controller
     {
         return $request->validate([
             'placement_category' => ['required', 'string', 'max:255'],
+            'account_id' => ['nullable', 'integer', 'exists:accounts,id'],
             'external_reference' => ['nullable', 'string', 'max:255'],
             'price' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
             'title_ru' => ['required', 'string', 'max:255'],
@@ -127,6 +133,7 @@ class ProductController extends Controller
     {
         return $request->only([
             'placement_category',
+            'account_id',
             'external_reference',
             'price',
             'title_ru',
@@ -138,6 +145,24 @@ class ProductController extends Controller
             'additional_info_ru',
             'additional_info_en',
         ]);
+    }
+
+    private function accountViewData(?Product $product = null): array
+    {
+        $accounts = Account::query()
+            ->orderBy('name')
+            ->get();
+
+        $selectedAccountId = old('account_id', $product?->account_id ?: session('selected_account_id'));
+
+        if (! $accounts->contains('id', (int) $selectedAccountId)) {
+            $selectedAccountId = null;
+        }
+
+        return [
+            'accounts' => $accounts,
+            'selectedAccountId' => $selectedAccountId ? (int) $selectedAccountId : null,
+        ];
     }
 
     private function generationPromptViewData(): array

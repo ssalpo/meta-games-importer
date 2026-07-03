@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Account extends Model
 {
@@ -18,6 +19,11 @@ final class Account extends Model
         return [
             'access_token' => 'encrypted',
         ];
+    }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
     }
 
     public function maskedAccessToken(): string

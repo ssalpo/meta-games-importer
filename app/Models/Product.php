@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -18,6 +19,7 @@ final class Product extends Model implements HasMedia
     public const IMAGE_EN = 'image_en';
 
     protected $fillable = [
+        'account_id',
         'placement_category',
         'external_reference',
         'price',
@@ -42,6 +44,11 @@ final class Product extends Model implements HasMedia
     {
         $this->addMediaCollection(self::IMAGE_RU)->singleFile();
         $this->addMediaCollection(self::IMAGE_EN)->singleFile();
+    }
+
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
     }
 
     public function imageRu(): ?Media

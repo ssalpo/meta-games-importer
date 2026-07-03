@@ -20,6 +20,10 @@
                 <h2 class="text-base font-semibold text-zinc-950">Основные данные</h2>
                 <dl class="mt-4 divide-y divide-zinc-100">
                     <div class="grid gap-1 py-3 sm:grid-cols-3">
+                        <dt class="text-sm font-medium text-zinc-600">Аккаунт</dt>
+                        <dd class="text-sm text-zinc-950 sm:col-span-2">{{ $product->account?->name ?: '-' }}</dd>
+                    </div>
+                    <div class="grid gap-1 py-3 sm:grid-cols-3">
                         <dt class="text-sm font-medium text-zinc-600">Категория размещения</dt>
                         <dd class="text-sm text-zinc-950 sm:col-span-2">{{ $product->placement_category }}</dd>
                     </div>
