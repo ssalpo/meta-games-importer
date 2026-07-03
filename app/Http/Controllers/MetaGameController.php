@@ -106,15 +106,12 @@ final class MetaGameController extends Controller
     private function rublePrice(?string $usdPrice): string
     {
         if ($usdPrice === null || (float) $usdPrice <= 0) {
-            return '0.00';
+            return '0';
         }
 
-        return number_format(
-            $this->exchangeRateService->usdToRub((float) $usdPrice),
-            2,
-            '.',
-            '',
-        );
+        $discountedUsdPrice = (float) $usdPrice * 0.9;
+
+        return (string) round($this->exchangeRateService->usdToRub($discountedUsdPrice));
     }
 
     private function attachSquareImage(Product $product, MetaGame $metaGame): bool

@@ -6,15 +6,24 @@ const productListElement = document.getElementById('productList');
 const productTemplate = document.getElementById('productTemplate');
 const refreshButton = document.getElementById('refreshButton');
 const accountSelect = document.getElementById('accountSelect');
+const publishAllButton = document.getElementById('publishAllButton');
 
 let selectedAccountId = null;
+let currentProducts = [];
+let isBulkPublishing = false;
 
 refreshButton.addEventListener('click', () => {
   initializePopup();
 });
 
+publishAllButton.addEventListener('click', () => {
+  publishAllProducts();
+});
+
 accountSelect.addEventListener('change', async () => {
   selectedAccountId = accountSelect.value ? Number(accountSelect.value) : null;
+  currentProducts = [];
+  updateBulkPublishButton();
   productListElement.replaceChildren();
 
   if (!selectedAccountId) {
@@ -34,6 +43,8 @@ initializePopup();
 
 async function initializePopup() {
   setStatus('Загрузка аккаунтов...');
+  currentProducts = [];
+  updateBulkPublishButton();
   productListElement.replaceChildren();
 
   try {
@@ -42,6 +53,8 @@ async function initializePopup() {
     if (accounts.length === 0) {
       accountSelect.disabled = true;
       selectedAccountId = null;
+      currentProducts = [];
+      updateBulkPublishButton();
       await chrome.storage.local.remove(STORAGE_SELECTED_ACCOUNT_ID);
       setStatus('Аккаунтов пока нет. Создайте аккаунт в панели.');
       return;
@@ -56,6 +69,8 @@ async function initializePopup() {
     if (!savedAccountExists) {
       selectedAccountId = null;
       accountSelect.value = '';
+      currentProducts = [];
+      updateBulkPublishButton();
       await chrome.storage.local.remove(STORAGE_SELECTED_ACCOUNT_ID);
       setStatus(savedAccountId ? 'Сохраненный аккаунт не найден. Выберите аккаунт.' : 'Выберите аккаунт.');
       return;
@@ -66,6 +81,8 @@ async function initializePopup() {
     await loadProducts();
   } catch (error) {
     setStatus(`Не удалось загрузить аккаунты: ${error.message}`);
+    currentProducts = [];
+    updateBulkPublishButton();
   }
 }
 
@@ -103,11 +120,15 @@ async function getSavedAccountId() {
 async function loadProducts() {
   if (!selectedAccountId) {
     setStatus('Выберите аккаунт.');
+    currentProducts = [];
+    updateBulkPublishButton();
     productListElement.replaceChildren();
     return;
   }
 
   setStatus('Загрузка...');
+  currentProducts = [];
+  updateBulkPublishButton();
   productListElement.replaceChildren();
 
   try {
@@ -126,6 +147,8 @@ async function loadProducts() {
 
     const payload = await response.json();
     const products = payload.data ?? [];
+    currentProducts = products;
+    updateBulkPublishButton();
 
     if (products.length === 0) {
       setStatus('Для выбранного аккаунта продуктов пока нет.');
@@ -136,6 +159,8 @@ async function loadProducts() {
     renderProducts(products);
   } catch (error) {
     setStatus(`Не удалось загрузить продукты: ${error.message}`);
+    currentProducts = [];
+    updateBulkPublishButton();
   }
 }
 
@@ -172,39 +197,26 @@ function renderProducts(products) {
   productListElement.append(fragment);
 }
 
+function updateBulkPublishButton() {
+  const publishableCount = currentProducts.filter((product) => !product.ggsel_offer_id).length;
+  publishAllButton.disabled = isBulkPublishing || !selectedAccountId || publishableCount === 0;
+  publishAllButton.textContent = publishableCount > 0
+    ? `Опубликовать все (${publishableCount})`
+    : 'Опубликовать все';
+}
+
+function setProductButtonsDisabled(disabled) {
+  productListElement.querySelectorAll('.publish-button').forEach((button) => {
+    button.disabled = disabled;
+  });
+}
+
 async function publishProduct(productId, button) {
   button.disabled = true;
   button.textContent = 'Публикация...';
 
   try {
-    const product = await loadProduct(productId);
-    const sellerBaseUrl = await getCurrentSiteBaseUrl();
-    const response = await fetch(`${sellerBaseUrl}/api/v1/offers/draft`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(buildDraftPayload(product)),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const payload = await response.json();
-    const offerId = payload?.data?.id;
-
-    if (!offerId) {
-      throw new Error('Сервер не вернул data.id.');
-    }
-
-    await saveGgselOfferId(productId, offerId);
-    await updateOfferQuantity(sellerBaseUrl, offerId);
-    await updateOfferPrice(sellerBaseUrl, offerId, product.price);
-    await updateOfferInstructions(sellerBaseUrl, offerId, product);
-    await activateOffer(sellerBaseUrl, offerId);
+    const offerId = await publishProductById(productId);
 
     setStatus(`Продукт опубликован, ID: ${offerId}`);
     await loadProducts();
@@ -213,6 +225,78 @@ async function publishProduct(productId, button) {
     button.textContent = 'Опубликовать';
     setStatus(`Ошибка публикации: ${error.message}`);
   }
+}
+
+async function publishAllProducts() {
+  if (isBulkPublishing) {
+    return;
+  }
+
+  const productIds = currentProducts
+    .filter((product) => !product.ggsel_offer_id)
+    .map((product) => product.id);
+
+  if (productIds.length === 0) {
+    setStatus('Нет продуктов для публикации.');
+    return;
+  }
+
+  isBulkPublishing = true;
+  publishAllButton.disabled = true;
+  accountSelect.disabled = true;
+  refreshButton.disabled = true;
+  setProductButtonsDisabled(true);
+
+  try {
+    for (const [index, productId] of productIds.entries()) {
+      setStatus(`Публикация ${index + 1} из ${productIds.length}...`);
+      await publishProductById(productId);
+    }
+
+    setStatus(`Опубликовано продуктов: ${productIds.length}.`);
+    await loadProducts();
+  } catch (error) {
+    setStatus(`Массовая публикация остановлена: ${error.message}`);
+  } finally {
+    isBulkPublishing = false;
+    accountSelect.disabled = false;
+    refreshButton.disabled = false;
+    setProductButtonsDisabled(false);
+    updateBulkPublishButton();
+  }
+}
+
+async function publishProductById(productId) {
+  const product = await loadProduct(productId);
+  const sellerBaseUrl = await getCurrentSiteBaseUrl();
+  const response = await fetch(`${sellerBaseUrl}/api/v1/offers/draft`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(buildDraftPayload(product)),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const offerId = payload?.data?.id;
+
+  if (!offerId) {
+    throw new Error('Сервер не вернул data.id.');
+  }
+
+  await saveGgselOfferId(productId, offerId);
+  await updateOfferQuantity(sellerBaseUrl, offerId);
+  await updateOfferPrice(sellerBaseUrl, offerId, product.price);
+  await updateOfferInstructions(sellerBaseUrl, offerId, product);
+  await activateOffer(sellerBaseUrl, offerId);
+
+  return offerId;
 }
 
 async function syncProduct(productId, button) {
@@ -299,7 +383,7 @@ function buildDraftPayload(product) {
       title_en: product.title_en || '',
       description_ru: product.description_ru || '',
       description_en: product.description_en || '',
-      category_id: 32616,
+      category_id: 74823,
       autoselling: false,
       cover_image_attributes: {
         attachment_data_uri: product.image_ru_data_uri || product.image_en_data_uri || null,
@@ -321,7 +405,7 @@ function buildSyncPayload(product) {
     description_en: product.description_en || '',
     autoselling: false,
     check_unique_code_url: null,
-    category_id: 32616,
+    category_id: 74823,
     delivery_kind: 'auto',
   };
 }
