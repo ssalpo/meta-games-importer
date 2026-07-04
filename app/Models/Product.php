@@ -14,6 +14,8 @@ final class Product extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
+    public const TITLE_MAX_LENGTH = 100;
+
     public const IMAGE_RU = 'image_ru';
 
     public const IMAGE_EN = 'image_en';

@@ -1,5 +1,7 @@
 import Alpine from 'alpinejs';
 
+const productTitleMaxLength = 100;
+
 Alpine.data('productForm', () => ({
     isGeneratingEnglish: false,
     generationError: '',
@@ -56,9 +58,9 @@ Alpine.data('productForm', () => ({
                 return;
             }
 
-            document.getElementById('title_ru').value = payload.title_ru ?? '';
+            document.getElementById('title_ru').value = (payload.title_ru ?? '').slice(0, productTitleMaxLength);
             document.getElementById('description_ru').value = payload.description_ru ?? '';
-            document.getElementById('title_en').value = payload.title_en ?? '';
+            document.getElementById('title_en').value = (payload.title_en ?? '').slice(0, productTitleMaxLength);
             document.getElementById('description_en').value = payload.description_en ?? '';
         } catch (error) {
             this.generationError = error?.message

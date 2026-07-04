@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\GenerationPrompt;
+use App\Models\Product;
 use App\Services\DeepSeekProductCopyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,8 +17,8 @@ final class ProductEnglishGenerationController extends Controller
     {
         $data = $request->validate([
             'generation_prompt_id' => ['required', 'integer', 'exists:generation_prompts,id'],
-            'product_title' => ['required_without:game_title', 'string', 'max:255'],
-            'game_title' => ['required_without:product_title', 'string', 'max:255'],
+            'product_title' => ['required_without:game_title', 'string', 'max:'.Product::TITLE_MAX_LENGTH],
+            'game_title' => ['required_without:product_title', 'string', 'max:'.Product::TITLE_MAX_LENGTH],
             'instructions' => ['nullable', 'string', 'max:5000'],
         ]);
 

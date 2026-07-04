@@ -29,6 +29,11 @@
 
       <section id="status" class="status">Загрузка...</section>
       <section id="productList" class="product-list" aria-live="polite"></section>
+      <nav id="pagination" class="pagination" aria-label="Страницы продуктов" hidden>
+        <button id="prevPageButton" class="page-button" type="button">Назад</button>
+        <span id="pageInfo" class="page-info"></span>
+        <button id="nextPageButton" class="page-button" type="button">Вперед</button>
+      </nav>
     </main>
 
     <template id="productTemplate">

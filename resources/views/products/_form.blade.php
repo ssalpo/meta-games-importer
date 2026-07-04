@@ -128,6 +128,7 @@
                             id="deepseek_game_title"
                             type="text"
                             value="{{ old('title_ru', $product->title_ru ? str_replace(' для Meta / Oculus Quest', '', $product->title_ru) : '') }}"
+                            maxlength="{{ \App\Models\Product::TITLE_MAX_LENGTH }}"
                             class="mt-2 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
                             placeholder="Например: Pavlov Shack"
                         >
@@ -163,6 +164,7 @@
                         name="title_{{ $locale }}"
                         type="text"
                         value="{{ old('title_'.$locale, $product->{'title_'.$locale}) }}"
+                        maxlength="{{ \App\Models\Product::TITLE_MAX_LENGTH }}"
                         required
                         class="mt-2 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
                     >

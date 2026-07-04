@@ -13,15 +13,34 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $search = trim((string) $request->query('q', ''));
+
         $products = Product::query()
             ->with(['account', 'media'])
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($query) use ($search): void {
+                    $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search).'%';
+
+                    $query
+                        ->where('title_ru', 'like', $like)
+                        ->orWhere('title_en', 'like', $like)
+                        ->orWhere('placement_category', 'like', $like)
+                        ->orWhere('external_reference', 'like', $like)
+                        ->orWhere('ggsel_offer_id', 'like', $like)
+                        ->orWhereHas('account', function ($query) use ($like): void {
+                            $query->where('name', 'like', $like);
+                        });
+                });
+            })
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('products.index', [
             'products' => $products,
+            'search' => $search,
         ]);
     }
 
@@ -102,8 +121,8 @@ class ProductController extends Controller
             'external_reference' => ['nullable', 'string', 'max:255'],
             'ggsel_offer_id' => ['nullable', 'integer'],
             'price' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
-            'title_ru' => ['required', 'string', 'max:255'],
-            'title_en' => ['required', 'string', 'max:255'],
+            'title_ru' => ['required', 'string', 'max:'.Product::TITLE_MAX_LENGTH],
+            'title_en' => ['required', 'string', 'max:'.Product::TITLE_MAX_LENGTH],
             'description_ru' => ['nullable', 'string'],
             'description_en' => ['nullable', 'string'],
             'instruction_ru' => ['nullable', 'string'],

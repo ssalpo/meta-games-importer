@@ -126,6 +126,9 @@ p {
   background: #ffffff;
   color: #52525b;
   font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .status:empty {
@@ -177,4 +180,47 @@ p {
 .publish-button:disabled {
   cursor: not-allowed;
   background: #a1a1aa;
+}
+
+.pagination {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pagination[hidden] {
+  display: none;
+}
+
+.page-button {
+  border: 1px solid #d4d4d8;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #18181b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 10px;
+}
+
+.page-button:hover {
+  background: #fafafa;
+}
+
+.page-button:disabled {
+  cursor: not-allowed;
+  color: #a1a1aa;
+  background: #f4f4f5;
+}
+
+.page-info {
+  overflow: hidden;
+  color: #52525b;
+  font-size: 12px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

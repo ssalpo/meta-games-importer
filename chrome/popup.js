@@ -7,23 +7,46 @@ const productTemplate = document.getElementById('productTemplate');
 const refreshButton = document.getElementById('refreshButton');
 const accountSelect = document.getElementById('accountSelect');
 const publishAllButton = document.getElementById('publishAllButton');
+const paginationElement = document.getElementById('pagination');
+const prevPageButton = document.getElementById('prevPageButton');
+const nextPageButton = document.getElementById('nextPageButton');
+const pageInfoElement = document.getElementById('pageInfo');
 
 let selectedAccountId = null;
 let currentProducts = [];
 let isBulkPublishing = false;
+let currentPage = 1;
+let paginationMeta = null;
+
+const PRODUCTS_PER_PAGE = 10;
 
 refreshButton.addEventListener('click', () => {
-  initializePopup();
+  initializePopup(currentPage);
 });
 
 publishAllButton.addEventListener('click', () => {
   publishAllProducts();
 });
 
+prevPageButton.addEventListener('click', () => {
+  if (paginationMeta?.current_page > 1) {
+    loadProducts(paginationMeta.current_page - 1);
+  }
+});
+
+nextPageButton.addEventListener('click', () => {
+  if (paginationMeta && paginationMeta.current_page < paginationMeta.last_page) {
+    loadProducts(paginationMeta.current_page + 1);
+  }
+});
+
 accountSelect.addEventListener('change', async () => {
   selectedAccountId = accountSelect.value ? Number(accountSelect.value) : null;
   currentProducts = [];
+  currentPage = 1;
+  paginationMeta = null;
   updateBulkPublishButton();
+  updatePagination();
   productListElement.replaceChildren();
 
   if (!selectedAccountId) {
@@ -41,10 +64,12 @@ accountSelect.addEventListener('change', async () => {
 
 initializePopup();
 
-async function initializePopup() {
+async function initializePopup(page = 1) {
   setStatus('Загрузка аккаунтов...');
   currentProducts = [];
+  paginationMeta = null;
   updateBulkPublishButton();
+  updatePagination();
   productListElement.replaceChildren();
 
   try {
@@ -54,7 +79,10 @@ async function initializePopup() {
       accountSelect.disabled = true;
       selectedAccountId = null;
       currentProducts = [];
+      currentPage = 1;
+      paginationMeta = null;
       updateBulkPublishButton();
+      updatePagination();
       await chrome.storage.local.remove(STORAGE_SELECTED_ACCOUNT_ID);
       setStatus('Аккаунтов пока нет. Создайте аккаунт в панели.');
       return;
@@ -70,7 +98,10 @@ async function initializePopup() {
       selectedAccountId = null;
       accountSelect.value = '';
       currentProducts = [];
+      currentPage = 1;
+      paginationMeta = null;
       updateBulkPublishButton();
+      updatePagination();
       await chrome.storage.local.remove(STORAGE_SELECTED_ACCOUNT_ID);
       setStatus(savedAccountId ? 'Сохраненный аккаунт не найден. Выберите аккаунт.' : 'Выберите аккаунт.');
       return;
@@ -78,11 +109,13 @@ async function initializePopup() {
 
     selectedAccountId = savedAccountId;
     accountSelect.value = String(savedAccountId);
-    await loadProducts();
+    await loadProducts(page);
   } catch (error) {
     setStatus(`Не удалось загрузить аккаунты: ${error.message}`);
     currentProducts = [];
+    paginationMeta = null;
     updateBulkPublishButton();
+    updatePagination();
   }
 }
 
@@ -117,23 +150,30 @@ async function getSavedAccountId() {
   return Number.isInteger(accountId) && accountId > 0 ? accountId : null;
 }
 
-async function loadProducts() {
+async function loadProducts(page = 1) {
   if (!selectedAccountId) {
     setStatus('Выберите аккаунт.');
     currentProducts = [];
+    currentPage = 1;
+    paginationMeta = null;
     updateBulkPublishButton();
+    updatePagination();
     productListElement.replaceChildren();
     return;
   }
 
   setStatus('Загрузка...');
   currentProducts = [];
+  paginationMeta = null;
   updateBulkPublishButton();
+  updatePagination();
   productListElement.replaceChildren();
 
   try {
     const url = new URL(`${API_BASE_URL}/extension/products`);
     url.searchParams.set('account_id', String(selectedAccountId));
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('per_page', String(PRODUCTS_PER_PAGE));
 
     const response = await fetch(url, {
       headers: {
@@ -148,7 +188,10 @@ async function loadProducts() {
     const payload = await response.json();
     const products = payload.data ?? [];
     currentProducts = products;
+    paginationMeta = payload.meta ?? null;
+    currentPage = paginationMeta?.current_page ?? page;
     updateBulkPublishButton();
+    updatePagination();
 
     if (products.length === 0) {
       setStatus('Для выбранного аккаунта продуктов пока нет.');
@@ -160,7 +203,9 @@ async function loadProducts() {
   } catch (error) {
     setStatus(`Не удалось загрузить продукты: ${error.message}`);
     currentProducts = [];
+    paginationMeta = null;
     updateBulkPublishButton();
+    updatePagination();
   }
 }
 
@@ -201,8 +246,23 @@ function updateBulkPublishButton() {
   const publishableCount = currentProducts.filter((product) => !product.ggsel_offer_id).length;
   publishAllButton.disabled = isBulkPublishing || !selectedAccountId || publishableCount === 0;
   publishAllButton.textContent = publishableCount > 0
-    ? `Опубликовать все (${publishableCount})`
+    ? `Опубликовать на странице (${publishableCount})`
     : 'Опубликовать все';
+}
+
+function updatePagination() {
+  if (!paginationMeta || paginationMeta.total === 0 || paginationMeta.last_page <= 1) {
+    paginationElement.hidden = true;
+    pageInfoElement.textContent = '';
+    prevPageButton.disabled = true;
+    nextPageButton.disabled = true;
+    return;
+  }
+
+  paginationElement.hidden = false;
+  pageInfoElement.textContent = `${paginationMeta.from}-${paginationMeta.to} из ${paginationMeta.total} · стр. ${paginationMeta.current_page}/${paginationMeta.last_page}`;
+  prevPageButton.disabled = isBulkPublishing || paginationMeta.current_page <= 1;
+  nextPageButton.disabled = isBulkPublishing || paginationMeta.current_page >= paginationMeta.last_page;
 }
 
 function setProductButtonsDisabled(disabled) {
@@ -212,6 +272,8 @@ function setProductButtonsDisabled(disabled) {
 }
 
 async function publishProduct(productId, button) {
+  const productSummary = currentProducts.find((product) => product.id === productId) ?? { id: productId };
+
   button.disabled = true;
   button.textContent = 'Публикация...';
 
@@ -223,7 +285,7 @@ async function publishProduct(productId, button) {
   } catch (error) {
     button.disabled = false;
     button.textContent = 'Опубликовать';
-    setStatus(`Ошибка публикации: ${error.message}`);
+    setStatus(`Ошибка публикации:\n${formatProductError(error, productSummary)}`);
   }
 }
 
@@ -232,11 +294,9 @@ async function publishAllProducts() {
     return;
   }
 
-  const productIds = currentProducts
-    .filter((product) => !product.ggsel_offer_id)
-    .map((product) => product.id);
+  const productsToPublish = currentProducts.filter((product) => !product.ggsel_offer_id);
 
-  if (productIds.length === 0) {
+  if (productsToPublish.length === 0) {
     setStatus('Нет продуктов для публикации.');
     return;
   }
@@ -245,66 +305,85 @@ async function publishAllProducts() {
   publishAllButton.disabled = true;
   accountSelect.disabled = true;
   refreshButton.disabled = true;
+  updatePagination();
   setProductButtonsDisabled(true);
 
+  let activeProduct = null;
+
   try {
-    for (const [index, productId] of productIds.entries()) {
-      setStatus(`Публикация ${index + 1} из ${productIds.length}...`);
-      await publishProductById(productId);
+    for (const [index, product] of productsToPublish.entries()) {
+      activeProduct = product;
+      setStatus(`Публикация ${index + 1} из ${productsToPublish.length}: ${productTitle(product)}`);
+      await publishProductById(product.id);
     }
 
-    setStatus(`Опубликовано продуктов: ${productIds.length}.`);
-    await loadProducts();
+    setStatus(`Опубликовано продуктов: ${productsToPublish.length}.`);
+    await loadProducts(currentPage);
   } catch (error) {
-    setStatus(`Массовая публикация остановлена: ${error.message}`);
+    const failedProduct = error.product
+      ?? productsToPublish.find((product) => product.id === error.productId)
+      ?? activeProduct;
+
+    setStatus(`Массовая публикация остановлена:\n${formatProductError(error, failedProduct)}`);
   } finally {
     isBulkPublishing = false;
     accountSelect.disabled = false;
     refreshButton.disabled = false;
     setProductButtonsDisabled(false);
     updateBulkPublishButton();
+    updatePagination();
   }
 }
 
 async function publishProductById(productId) {
   const product = await loadProduct(productId);
-  const sellerBaseUrl = await getCurrentSiteBaseUrl();
-  const response = await fetch(`${sellerBaseUrl}/api/v1/offers/draft`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(buildDraftPayload(product)),
-  });
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
+  try {
+    const sellerBaseUrl = await getCurrentSiteBaseUrl();
+    const draftUrl = `${sellerBaseUrl}/api/v1/offers/draft`;
+    const response = await fetch(draftUrl, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(buildDraftPayload(product)),
+    });
+
+    if (!response.ok) {
+      throw await responseError(response, 'Создание черновика');
+    }
+
+    const payload = await response.json();
+    const offerId = payload?.data?.id;
+
+    if (!offerId) {
+      throw new Error('Создание черновика: сервер не вернул data.id.');
+    }
+
+    await saveGgselOfferId(productId, offerId);
+    await updateOfferQuantity(sellerBaseUrl, offerId);
+    await updateOfferPrice(sellerBaseUrl, offerId, product.price);
+    await updateOfferInstructions(sellerBaseUrl, offerId, product);
+    await activateOffer(sellerBaseUrl, offerId);
+
+    return offerId;
+  } catch (error) {
+    error.productId = product.id;
+    error.product = product;
+    throw error;
   }
-
-  const payload = await response.json();
-  const offerId = payload?.data?.id;
-
-  if (!offerId) {
-    throw new Error('Сервер не вернул data.id.');
-  }
-
-  await saveGgselOfferId(productId, offerId);
-  await updateOfferQuantity(sellerBaseUrl, offerId);
-  await updateOfferPrice(sellerBaseUrl, offerId, product.price);
-  await updateOfferInstructions(sellerBaseUrl, offerId, product);
-  await activateOffer(sellerBaseUrl, offerId);
-
-  return offerId;
 }
 
 async function syncProduct(productId, button) {
+  let product = currentProducts.find((currentProduct) => currentProduct.id === productId) ?? { id: productId };
+
   button.disabled = true;
   button.textContent = 'Синхронизация...';
 
   try {
-    const product = await loadProduct(productId);
+    product = await loadProduct(productId);
 
     if (!product.ggsel_offer_id) {
       throw new Error('У продукта нет GGSEL offer ID.');
@@ -322,7 +401,7 @@ async function syncProduct(productId, button) {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      throw await responseError(response, 'Синхронизация объявления');
     }
 
     await updateOfferPrice(sellerBaseUrl, product.ggsel_offer_id, product.price);
@@ -333,7 +412,7 @@ async function syncProduct(productId, button) {
   } catch (error) {
     button.disabled = false;
     button.textContent = 'Синхронизировать';
-    setStatus(`Ошибка синхронизации: ${error.message}`);
+    setStatus(`Ошибка синхронизации:\n${formatProductError(error, error.product ?? product)}`);
   }
 }
 
@@ -349,7 +428,7 @@ async function loadProduct(productId) {
   });
 
   if (!response.ok) {
-    throw new Error(`Не удалось получить продукт: HTTP ${response.status}`);
+    throw await responseError(response, 'Получение продукта');
   }
 
   const payload = await response.json();
@@ -423,7 +502,7 @@ async function saveGgselOfferId(productId, offerId) {
   });
 
   if (!response.ok) {
-    throw new Error(`Не удалось сохранить GGSEL offer ID: HTTP ${response.status}`);
+    throw await responseError(response, 'Сохранение GGSEL offer ID');
   }
 }
 
@@ -443,7 +522,7 @@ async function updateOfferPrice(sellerBaseUrl, offerId, price) {
   });
 
   if (!response.ok) {
-    throw new Error(`Не удалось обновить цену: HTTP ${response.status}`);
+    throw await responseError(response, 'Обновление цены');
   }
 }
 
@@ -477,7 +556,7 @@ async function updateOfferInstructions(sellerBaseUrl, offerId, product) {
   });
 
   if (!response.ok) {
-    throw new Error(`Не удалось обновить инструкции: HTTP ${response.status}`);
+    throw await responseError(response, 'Обновление инструкций');
   }
 }
 
@@ -491,7 +570,7 @@ async function activateOffer(sellerBaseUrl, offerId) {
   });
 
   if (!response.ok) {
-    throw new Error(`Не удалось опубликовать объявление: HTTP ${response.status}`);
+    throw await responseError(response, 'Активация объявления');
   }
 }
 
@@ -510,6 +589,52 @@ async function updateOfferQuantity(sellerBaseUrl, offerId) {
   });
 
   if (!response.ok) {
-    throw new Error(`Не удалось обновить количество: HTTP ${response.status}`);
+    throw await responseError(response, 'Обновление количества');
   }
+}
+
+async function responseError(response, action) {
+  const body = await response.text().catch(() => '');
+  const messageParts = [
+    `${action}: HTTP ${response.status} ${response.statusText}`.trim(),
+    `URL: ${response.url}`,
+  ];
+
+  if (body.trim()) {
+    messageParts.push(`Ответ: ${truncateText(body.trim(), 800)}`);
+  }
+
+  return new Error(messageParts.join('\n'));
+}
+
+function formatProductError(error, fallbackProduct = null) {
+  const product = error.product ?? fallbackProduct;
+  const details = [];
+
+  if (product) {
+    details.push(`Продукт: #${product.id ?? '-'} — ${productTitle(product)}`);
+
+    const meta = [
+      product.account_name ? `аккаунт: ${product.account_name}` : null,
+      product.price !== undefined && product.price !== null ? `цена: ${product.price}` : null,
+      product.ggsel_offer_id ? `GGSEL offer ID: ${product.ggsel_offer_id}` : 'GGSEL offer ID: нет',
+      product.external_reference ? `внешний ID: ${product.external_reference}` : null,
+    ].filter(Boolean);
+
+    if (meta.length > 0) {
+      details.push(`Данные: ${meta.join('; ')}`);
+    }
+  }
+
+  details.push(`Ошибка: ${error.message}`);
+
+  return details.join('\n');
+}
+
+function productTitle(product) {
+  return product?.title_ru || product?.title_en || `Продукт #${product?.id ?? '-'}`;
+}
+
+function truncateText(text, maxLength) {
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 }

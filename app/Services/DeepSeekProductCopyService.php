@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\GenerationPrompt;
+use App\Models\Product;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -64,9 +65,9 @@ final class DeepSeekProductCopyService
         }
 
         return [
-            'title_ru' => trim((string) ($generated['title_ru'] ?? '')),
+            'title_ru' => (string) str(trim((string) ($generated['title_ru'] ?? '')))->limit(Product::TITLE_MAX_LENGTH, ''),
             'description_ru' => trim((string) ($generated['description_ru'] ?? '')),
-            'title_en' => trim((string) ($generated['title_en'] ?? '')),
+            'title_en' => (string) str(trim((string) ($generated['title_en'] ?? '')))->limit(Product::TITLE_MAX_LENGTH, ''),
             'description_en' => trim((string) ($generated['description_en'] ?? '')),
         ];
     }

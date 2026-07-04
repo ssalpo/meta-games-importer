@@ -9,14 +9,44 @@
         </a>
     </div>
 
+    <form method="GET" action="{{ route('products.index') }}" class="mb-4 flex flex-col gap-3 rounded-md border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row">
+        <label for="q" class="sr-only">Поиск продуктов</label>
+        <input
+            id="q"
+            name="q"
+            type="search"
+            value="{{ $search }}"
+            placeholder="Поиск по названию, аккаунту, категории, внешнему ID или GGSEL"
+            class="min-h-10 flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-200"
+        >
+        <div class="flex gap-2">
+            <button type="submit" class="inline-flex items-center justify-center rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800">
+                Найти
+            </button>
+            @if ($search !== '')
+                <a href="{{ route('products.index') }}" class="inline-flex items-center justify-center rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50">
+                    Сбросить
+                </a>
+            @endif
+        </div>
+    </form>
+
     <div class="overflow-hidden rounded-md border border-zinc-200 bg-white shadow-sm">
         @if ($products->isEmpty())
             <div class="px-6 py-16 text-center">
-                <h2 class="text-base font-semibold text-zinc-950">Продуктов пока нет</h2>
-                <p class="mt-2 text-sm text-zinc-600">Создайте первый продукт для импорта и размещения.</p>
-                <a href="{{ route('products.create') }}" class="mt-6 inline-flex rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800">
-                    Добавить продукт
-                </a>
+                @if ($search !== '')
+                    <h2 class="text-base font-semibold text-zinc-950">Ничего не найдено</h2>
+                    <p class="mt-2 text-sm text-zinc-600">Попробуйте изменить запрос или сбросить поиск.</p>
+                    <a href="{{ route('products.index') }}" class="mt-6 inline-flex rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800">
+                        Сбросить поиск
+                    </a>
+                @else
+                    <h2 class="text-base font-semibold text-zinc-950">Продуктов пока нет</h2>
+                    <p class="mt-2 text-sm text-zinc-600">Создайте первый продукт для импорта и размещения.</p>
+                    <a href="{{ route('products.create') }}" class="mt-6 inline-flex rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800">
+                        Добавить продукт
+                    </a>
+                @endif
             </div>
         @else
             <div class="overflow-x-auto">

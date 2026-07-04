@@ -30,26 +30,37 @@ final class ExtensionProductController extends Controller
     public function index(Request $request): JsonResponse
     {
         $accountId = $request->integer('account_id') ?: null;
+        $perPage = min(max($request->integer('per_page') ?: 10, 1), 50);
 
         $products = Product::query()
             ->with('account')
             ->when($accountId, fn ($query) => $query->where('account_id', $accountId))
+            ->orderByRaw('CASE WHEN ggsel_offer_id IS NULL THEN 0 ELSE 1 END')
             ->latest()
-            ->limit(50)
-            ->get()
-            ->map(fn (Product $product): array => [
-                'id' => $product->id,
-                'account_id' => $product->account_id,
-                'title_ru' => $product->title_ru,
-                'title_en' => $product->title_en,
-                'price' => $product->price,
-                'external_reference' => $product->external_reference,
-                'ggsel_offer_id' => $product->ggsel_offer_id,
-                'account_name' => $product->account?->name,
-            ]);
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $items = $products->getCollection()->map(fn (Product $product): array => [
+            'id' => $product->id,
+            'account_id' => $product->account_id,
+            'title_ru' => $product->title_ru,
+            'title_en' => $product->title_en,
+            'price' => $product->price,
+            'external_reference' => $product->external_reference,
+            'ggsel_offer_id' => $product->ggsel_offer_id,
+            'account_name' => $product->account?->name,
+        ]);
 
         return response()->json([
-            'data' => $products,
+            'data' => $items,
+            'meta' => [
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+                'per_page' => $products->perPage(),
+                'total' => $products->total(),
+                'from' => $products->firstItem(),
+                'to' => $products->lastItem(),
+            ],
         ]);
     }
 
